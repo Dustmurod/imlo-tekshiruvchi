@@ -78,7 +78,7 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 DATABASES = {
     'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL', 'postgres://postgres:admin@127.0.0.1:5432/spellcheck_db')
+        default=os.environ.get('DATABASE_URL')
     )
 }
 
