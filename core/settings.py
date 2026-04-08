@@ -82,7 +82,6 @@ DATABASES = {
         default=os.environ.get('DATABASE_URL', 'postgres://postgres:admin@127.0.0.1:5432/spellcheck_db')
     )
 }
-}
 
 
 # Password validation
