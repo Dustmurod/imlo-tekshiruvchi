@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Imlo Tekshirish & Lug'at | BMI Pro</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/dist/tippy.css" />
+    <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/animations/shift-away.css" />
+    
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f4f7f6; 
+            color: #333;
+        }
+        .main-card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            background: white;
+            padding: 30px;
+            margin-top: 50px;
+        }
+        .header-title {
+            color: #2c3e50;
+            font-weight: 600;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        textarea {
+            border: 2px solid #e9ecef !important;
+            border-radius: 10px !important;
+            resize: none;
+            transition: all 0.3s;
+        }
+        textarea:focus {
+            border-color: #4a90e2 !important;
+            box-shadow: 0 0 0 0.2rem rgba(74,144,226,0.1) !important;
+        }
+        .result-box {
+            background: #fff;
+            border: 1px solid #edf2f7;
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 150px;
+            font-size: 1.1rem;
+            line-height: 1.8;
+        }
+        
+        /* Imlo xatosi uslubi */
+        .error-word {
+            border-bottom: 2px dotted #e74c3c;
+            cursor: help;
+            color: #e74c3c;
+            padding: 0 2px;
+        }
+        
+        /* Izohli atama uslubi */
+        .term-word {
+            border-bottom: 2px dashed #3498db;
+            cursor: help;
+            color: #2c3e50;
+            background-color: rgba(52, 152, 219, 0.05);
+            padding: 0 4px;
+            border-radius: 4px;
+        }
+
+        /* Tippy ichidagi takliflar uslubi */
+        .suggest-link {
+            display: block;
+            color: #fab1a0;
+            text-decoration: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: 0.2s;
+        }
+        .suggest-link:hover {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+
+        .btn-check-pro {
+            background: #4a90e2;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+        .btn-check-pro:hover {
+            background: #357abd;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="main-card">
+                <h2 class="header-title">O'zbek tili Imlo va Izohli lug'at tizimi</h2>
+                
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label class="form-label text-muted">Tekshirish uchun matnni kiriting:</label>
+                        <textarea id="main-textarea" name="text" class="form-control" rows="6" placeholder="Bu yerga sport yoki ilmiy atamalar ishtirok etgan matnni yozing...">{{ text }}</textarea>
+                    </div>
+                    <div class="text-center mb-5">
+                        <button type="submit" class="btn-check-pro shadow-sm">Matnni tahlil qilish</button>
+                    </div>
+                </form>
+
+                {% if result %}
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="text-muted mb-0">Tahlil natijasi:</h5>
+                    <span class="badge bg-primary">Xato: {{ stats.errors }} | Savodxonlik: {{ stats.accuracy }}%</span>
+                </div>
+
+                <div class="result-box mb-4">
+                    {% for item in result %}
+                        {% if item.correct %}
+                            {% if item.definition %}
+                                <span class="term-word" data-tippy-content="<strong>Izoh:</strong><br>{{ item.definition }}">
+                                    {{ item.word }}
+                                </span>
+                            {% else %}
+                                <span>{{ item.word }}</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="error-word" data-template="tpl-{{ forloop.counter }}">
+                                {{ item.word }}
+                            </span>
+                            
+                            <div id="tpl-{{ forloop.counter }}" style="display: none;">
+                                <div class="p-1">
+                                    <small class="text-white-50 d-block mb-2">To'g'ri variantni tanlang:</small>
+                                    {% for s in item.suggestions %}
+                                        <a href="#" class="suggest-link" onclick="replaceWord('{{ item.word }}','{{ s }}')">{{ s }}</a>
+                                    {% empty %}
+                                        <small class="text-white-50">Variantlar topilmadi</small>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <div class="p-3 bg-light border rounded-3 text-center">
+                            <div class="text-muted small">Jami so'zlar</div>
+                            <div class="h4 mb-0 fw-bold">{{ stats.total }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3 bg-light border rounded-3 text-center">
+                            <div class="text-muted small">Xatolar</div>
+                            <div class="h4 mb-0 fw-bold text-danger">{{ stats.errors }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3 bg-light border rounded-3 text-center">
+                            <div class="text-muted small">Tozalik</div>
+                            <div class="h4 mb-0 fw-bold text-success">{{ stats.accuracy }}%</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3 bg-light border rounded-3 text-center">
+                            <div class="text-muted small">Vaqt</div>
+                            <div class="h4 mb-0 fw-bold text-primary">{{ stats.duration }} ms</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="progress mb-4" style="height: 8px;">
+                    <div class="progress-bar {% if stats.accuracy > 80 %}bg-success{% elif stats.accuracy > 50 %}bg-warning{% else %}bg-danger{% endif %}" 
+                         style="width: {{ stats.accuracy }}%"></div>
+                </div>
+
+                <div class="alert alert-info py-2 small">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Qizil</strong> chiziq - imlo xatosi (tuzatish uchun bosing). 
+                    <strong>Ko'k</strong> chiziq - atama izohi mavjud.
+                </div>
+                {% endif %}
+            </div>
+            <p class="text-center mt-4 text-muted small">BMI Loyihasi © 2026 | Django + PostgreSQL + Tippy.js</p>
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/@popperjs/core@2"></script>
+<script src="https://unpkg.com/tippy.js@6"></script>
+
+<script>
+    // 1. Imlo xatolari uchun Tippy (Template orqali)
+    document.querySelectorAll('.error-word').forEach(el => {
+        const templateId = el.getAttribute('data-template');
+        const template = document.getElementById(templateId);
+        
+        tippy(el, {
+            content: template.innerHTML,
+            allowHTML: true,
+            interactive: true,
+            theme: 'material',
+            placement: 'top',
+            animation: 'shift-away',
+        });
+    });
+
+    // 2. Atamalar izohi uchun Tippy (Atribut orqali)
+    tippy('.term-word', {
+        allowHTML: true,
+        interactive: true,
+        theme: 'light-border',
+        placement: 'top',
+        animation: 'shift-away',
+        maxWidth: 300,
+    });
+
+    // 3. So'zni almashtirish funksiyasi
+    function replaceWord(oldWord, newWord) {
+        event.preventDefault();
+        let textarea = document.getElementById("main-textarea");
+        // Faqat butun so'zni almashtirish uchun regex
+        let regex = new RegExp('\\b' + oldWord + '\\b', 'g');
+        textarea.value = textarea.value.replace(regex, newWord);
+        
+        // Formani qayta yuborish (ixtiyoriy, natijani yangilash uchun)
+        // document.forms[0].submit();
+    }
+</script>
+
+</body>
+</html>
