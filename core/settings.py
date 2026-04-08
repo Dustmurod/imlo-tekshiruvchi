@@ -27,7 +27,7 @@ SECRET_KEY = 'django-insecure-2!q1+&ogt*kf5k1t67d2jgx=8b%b%!goc1g&-+8hj1w#p)3owk
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['imlo-tekshiruvchi-4.onrender.com', '127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['bmi-imlo-tekshiruvchi.onrender.com', '127.0.0.1', 'localhost']
 
 # Application definition
 
